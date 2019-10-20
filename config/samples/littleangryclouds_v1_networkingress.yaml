@@ -1,0 +1,7 @@
+apiVersion: littleangryclouds.little-angry-clouds.k8s.io/v1
+kind: NetworkIngress
+metadata:
+  name: networkingress-sample
+spec:
+  # Add fields here
+  foo: bar

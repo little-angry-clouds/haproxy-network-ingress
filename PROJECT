@@ -1,0 +1,7 @@
+version: "2"
+domain: little-angry-clouds.k8s.io
+repo: github.com/little-angry-clouds/network-ingress-controller
+resources:
+- group: littleangryclouds
+  version: v1
+  kind: NetworkIngress
