@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: network-ingress-haproxy-backend
+  labels:
+    app: network-ingress-haproxy-backend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: healthz
+  selector:
+    app: network-ingress-haproxy-backend

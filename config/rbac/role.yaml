@@ -1,0 +1,43 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmap
+  verbs:
+  - create
+  - get
+  - list
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - configmap/status
+  verbs:
+  - get
+- apiGroups:
+  - littleangryclouds.little-angry-clouds.k8s.io
+  resources:
+  - networkingresses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - littleangryclouds.little-angry-clouds.k8s.io
+  resources:
+  - networkingresses/status
+  verbs:
+  - get
+  - patch
+  - update

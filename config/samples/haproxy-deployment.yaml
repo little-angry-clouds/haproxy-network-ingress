@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: network-ingress-haproxy-backend
+  labels:
+    app: network-ingress-haproxy-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: network-ingress-haproxy-backend
+  template:
+    metadata:
+      labels:
+        app: network-ingress-haproxy-backend
+    spec:
+      containers:
+        - name: network-ingress-haproxy-backend
+          image: haproxy:2.0
+          ports:
+            - name: healthz
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+          volumeMounts:
+          - mountPath: /usr/local/etc/haproxy/
+            name: networkingress-configuration
+            readOnly: true
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: networkingress-configuration
+        name: networkingress-configuration
