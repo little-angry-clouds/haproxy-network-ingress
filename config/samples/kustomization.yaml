@@ -1,6 +1,3 @@
-# Adds namespace to all resources.
-namespace: haproxy-network-ingress-system
-
 resources:
 - haproxy-deployment.yaml
 - haproxy-service.yaml
