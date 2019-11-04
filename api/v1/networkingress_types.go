@@ -16,7 +16,8 @@ type NetworkIngressSpec struct {
 	Rules []Rule `json:"rules"`
 }
 
-// TODO añadir descripción
+// A rule is the core of a Network Ingress
+// It defines name, host, port and target port of a rule
 type Rule struct {
 	Name       string `json:"name"`
 	Host       string `json:"host"`
