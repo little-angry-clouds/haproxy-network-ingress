@@ -344,7 +344,6 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 
 	// TODO hacer que no se ejecute si el NetworkIngress no tiene la clase adecuada
 	// O que coja el por defecto
-	// testNetworkIngress.Labels
 
 	// Update configmap
 	err := updateConfigmap(op, configmapName)
