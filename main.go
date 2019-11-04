@@ -8,7 +8,7 @@ import (
 	"flag"
 	"os"
 
-	littleangrycloudsv1 "github.com/little-angry-clouds/haproxy-network-ingress/api/v1"
+	networkingressv1 "github.com/little-angry-clouds/haproxy-network-ingress/api/v1"
 	"github.com/little-angry-clouds/haproxy-network-ingress/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -25,7 +25,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
-	_ = littleangrycloudsv1.AddToScheme(scheme)
+	_ = networkingressv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 

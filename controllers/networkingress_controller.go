@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	littleangrycloudsv1 "github.com/little-angry-clouds/haproxy-network-ingress/api/v1"
+	networkingressv1 "github.com/little-angry-clouds/haproxy-network-ingress/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
@@ -85,7 +85,7 @@ func createConfigmap(op NetworkIngressOperationRequest, configmapName types.Name
 // Update haproxy's configmap
 func updateConfigmap(op NetworkIngressOperationRequest, configMapName types.NamespacedName) error {
 	// var result NetworkIngressOperationResult
-	var networkIngresses littleangrycloudsv1.NetworkIngressList
+	var networkIngresses networkingressv1.NetworkIngressList
 	var emptyData = make(map[string]string)
 	var itemLogger logr.Logger
 
@@ -226,7 +226,7 @@ func updateBackendPorts(op NetworkIngressOperationRequest, backendDeploymentPort
 
 // Update service and deployment ports
 func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.NamespacedName, networkIngressClass string) (error, []string) {
-	var networkIngresses littleangrycloudsv1.NetworkIngressList
+	var networkIngresses networkingressv1.NetworkIngressList
 	var containerPort corev1.ContainerPort
 	var servicePort corev1.ServicePort
 	var backendServicePorts []corev1.ServicePort
@@ -320,12 +320,12 @@ func deleteUnusedServices(op NetworkIngressOperationRequest, modifiedServices []
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;create;update;watch
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;update;watch
 // +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;create;update;watch;delete
-// +kubebuilder:rbac:groups=littleangryclouds.little-angry-clouds.k8s.io,resources=networkingresses,verbs=get;list;watch
+// +kubebuilder:rbac:groups=networkingress.little-angry-clouds.k8s.io,resources=networkingresses,verbs=get;list;watch
 
 func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// Initial setup
 	var op NetworkIngressOperationRequest
-	var testNetworkIngress littleangrycloudsv1.NetworkIngress
+	var testNetworkIngress networkingressv1.NetworkIngress
 	op.ApiClient = r
 	op.Request = req
 	log := op.ApiClient.Log.WithValues("request", op.Request.NamespacedName).WithValues("function", "Reconciler")
@@ -391,6 +391,6 @@ func difference(a, b []string) []string {
 
 func (r *NetworkIngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&littleangrycloudsv1.NetworkIngress{}).
+		For(&networkingressv1.NetworkIngress{}).
 		Complete(r)
 }

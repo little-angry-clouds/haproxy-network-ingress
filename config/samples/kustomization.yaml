@@ -4,4 +4,4 @@ namespace: haproxy-network-ingress-system
 resources:
 - haproxy-deployment.yaml
 - haproxy-service.yaml
-- littleangryclouds_v1_networkingress.yaml
+- networkingress.yaml
