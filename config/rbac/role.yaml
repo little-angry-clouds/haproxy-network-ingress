@@ -7,37 +7,40 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
   - ""
   resources:
-  - configmap
+  - configmaps
   verbs:
   - create
   - get
   - list
   - update
+  - watch
 - apiGroups:
   - ""
   resources:
-  - configmap/status
-  verbs:
-  - get
-- apiGroups:
-  - littleangryclouds.little-angry-clouds.k8s.io
-  resources:
-  - networkingresses
+  - services
   verbs:
   - create
   - delete
   - get
   - list
-  - patch
   - update
   - watch
 - apiGroups:
   - littleangryclouds.little-angry-clouds.k8s.io
   resources:
-  - networkingresses/status
+  - networkingresses
   verbs:
   - get
-  - patch
-  - update
+  - list
+  - watch

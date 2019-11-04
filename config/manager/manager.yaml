@@ -27,7 +27,11 @@ spec:
         - /manager
         args:
         - --enable-leader-election
+        - --backend-name=haproxy-network-ingress-default-backend
+        - --configmap-name=network-ingress-configuration
+        - --metrics-addr=127.0.0.1:8080
         image: controller:latest
+        imagePullPolicy: Always
         name: manager
         resources:
           limits:

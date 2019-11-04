@@ -1,6 +1,6 @@
-
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= littleangryclouds/haproxy-network-ingress:latest
+
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -57,6 +57,13 @@ docker-build: test
 # Push the docker image
 docker-push:
 	docker push ${IMG}
+
+# Deploy the docker image
+docker-deploy: docker-build docker-push deploy
+
+# Delete the installed stuff
+delete:
+	kustomize build config/default | ku delete -f -
 
 # find or download controller-gen
 # download controller-gen if necessary
