@@ -8,8 +8,8 @@ import (
 	"flag"
 	"os"
 
-	littleangrycloudsv1 "github.com/little-angry-clouds/network-ingress-controller/api/v1"
-	"github.com/little-angry-clouds/network-ingress-controller/controllers"
+	littleangrycloudsv1 "github.com/little-angry-clouds/haproxy-network-ingress/api/v1"
+	"github.com/little-angry-clouds/haproxy-network-ingress/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"

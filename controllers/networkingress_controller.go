@@ -10,7 +10,7 @@ import (
 	"sort"
 
 	"github.com/go-logr/logr"
-	littleangrycloudsv1 "github.com/little-angry-clouds/network-ingress-controller/api/v1"
+	littleangrycloudsv1 "github.com/little-angry-clouds/haproxy-network-ingress/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"

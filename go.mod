@@ -1,4 +1,4 @@
-module github.com/little-angry-clouds/network-ingress-controller
+module github.com/little-angry-clouds/haproxy-network-ingress
 
 go 1.13
 

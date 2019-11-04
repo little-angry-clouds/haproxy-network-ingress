@@ -1,6 +1,6 @@
 version: "2"
 domain: little-angry-clouds.k8s.io
-repo: github.com/little-angry-clouds/network-ingress-controller
+repo: github.com/little-angry-clouds/haproxy-network-ingress
 resources:
 - group: littleangryclouds
   version: v1
