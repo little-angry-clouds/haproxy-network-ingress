@@ -5,7 +5,10 @@ go 1.13
 require (
 	cloud.google.com/go v0.47.0 // indirect
 	github.com/Azure/go-autorest v11.1.2+incompatible // indirect
+	github.com/FairwindsOps/rbac-lookup v0.5.0 // indirect
 	github.com/d4l3k/messagediff v1.2.1 // indirect
+	github.com/fairwindsops/rbac-lookup v0.5.0 // indirect
+	github.com/genuinetools/reg v0.16.0 // indirect
 	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4 // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1 // indirect
@@ -14,6 +17,7 @@ require (
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
+	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
 	github.com/onsi/ginkgo v1.10.1
 	github.com/onsi/gomega v1.7.0
