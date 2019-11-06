@@ -1,4 +1,3 @@
 resources:
 - haproxy-deployment.yaml
-- haproxy-service.yaml
 - networkingress.yaml
