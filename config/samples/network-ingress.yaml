@@ -16,7 +16,7 @@ metadata:
   name: networkingress-sample-2
 spec:
   rules:
-  - host: mysql.db.com
-    port: 3306
-    targetPort: 3306
-    name: mysql
+    - host: mysql.db.com
+      port: 3306
+      targetPort: 3306
+      name: mysql
