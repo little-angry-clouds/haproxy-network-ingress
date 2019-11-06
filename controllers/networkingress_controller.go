@@ -342,9 +342,6 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		log.Info("updating NetworkIngress")
 	}
 
-	// TODO hacer que no se ejecute si el NetworkIngress no tiene la clase adecuada
-	// O que coja el por defecto
-
 	// Update configmap
 	err := updateConfigmap(op, configmapName)
 	if err != nil {
