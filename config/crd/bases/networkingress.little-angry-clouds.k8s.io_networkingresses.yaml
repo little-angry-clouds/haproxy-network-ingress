@@ -6,13 +6,27 @@ metadata:
   creationTimestamp: null
   name: networkingresses.networkingress.little-angry-clouds.k8s.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.rules[].name
+    name: Service
+    type: string
+  - JSONPath: .spec.rules[].port
+    name: Port
+    type: integer
+  - JSONPath: .spec.rules[].targetPort
+    name: TargetPort
+    type: integer
   group: networkingress.little-angry-clouds.k8s.io
   names:
     kind: NetworkIngress
     listKind: NetworkIngressList
     plural: networkingresses
+    shortNames:
+    - ningress
+    - ning
     singular: networkingress
-  scope: ""
+  scope: Namespaced
+  subresources: {}
   validation:
     openAPIV3Schema:
       description: NetworkIngress is the Schema for the networkingresses API
@@ -32,19 +46,26 @@ spec:
         spec:
           properties:
             rules:
-              description: 'Important: Run "make" to regenerate code after modifying
-                this file'
+              description: A list of hosts and its associated ports used to configure
+                the Network Ingress.
               items:
-                description: A rule is the core of a Network Ingress It defines name,
-                  host, port and target port of a rule
+                description: A rule is the core of a Network Ingress . It defines
+                  name, host, port and target port of a rule
                 properties:
                   host:
+                    description: Host of the rule. This is the destination machine
+                      that Haproxy will conecct to.
                     type: string
                   name:
+                    description: Name of the rule. This will be used as ID
                     type: string
                   port:
+                    description: Port of the rule. This is the port that will be configured
+                      in the service.
                     type: integer
                   targetPort:
+                    description: Target port of the rule. This is the port that will
+                      be configured in the Haproxy' s configuration
                     type: integer
                 required:
                 - host
@@ -57,7 +78,7 @@ spec:
           - rules
           type: object
         status:
-          description: NetworkIngressStatus defines the observed state of NetworkIngress
+          description: Defines the observed state of NetworkIngress
           type: object
       type: object
   version: v1
