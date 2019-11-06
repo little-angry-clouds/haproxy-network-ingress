@@ -42,7 +42,6 @@ type NetworkIngressReconciler struct {
 // We generally want to ignore (not requeue) NotFound errors, since we’ll get a
 // reconciliation request once the object exists, and requeuing in the meantime
 // won’t help.
-// TODO revisar cuando mas tengo que usar esta funcion
 func ignoreNotFound(err error) error {
 	if apierrs.IsNotFound(err) {
 		return nil
