@@ -61,7 +61,8 @@ And you will access to your remote RDS securely and easily as it were in your
 localhost!
 
 ### Use case 2
-This use case is in the TODO list.
+This use case is in the ![TODO
+list](https://github.com/little-angry-clouds/haproxy-network-ingress/issues/15).
 
 This one is the exact opposite as the previous one. In the previous use case
 we wanted to access remote resources through kubernetes. In this one we want to
@@ -111,12 +112,15 @@ spec:
 
 This way, you'll have one LB with multiple ports pointing to your precious services.
 
-## Docker
+## Deployment
 
-There's an image in ![Docker
-Hub](https://cloud.docker.com/u/littleangryclouds/repository/docker/littleangryclouds/haproxy-network-ingress).
+The recommended way to use this controller is using it's [helm
+chart](https://github.com/little-angry-clouds/charts/tree/master/haproxy-network-ingress).
 
-# Thanks
+## Issues
+You may open an issue with any problem or question you have.
+
+## Thanks
 As you may have noticed, this README it's very similar to the one on the ![NGINX
 Ingress repository](https://github.com/kubernetes/ingress-nginx), so thanks to
 them to doing such a great README.
@@ -124,3 +128,6 @@ them to doing such a great README.
 ![The kubebuilder
 book](https://kubebuilder.io/cronjob-tutorial/cronjob-tutorial.html) is awesome!
 It makes very easy developing a Controller even if you don't know what you're doing.
+
+## License
+![GPL3](LICENSE)
