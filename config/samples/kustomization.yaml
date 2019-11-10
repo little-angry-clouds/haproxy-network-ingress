@@ -1,3 +1,4 @@
 resources:
 - haproxy-deployment.yaml
 - network-ingress.yaml
+- haproxy-configmap.yaml

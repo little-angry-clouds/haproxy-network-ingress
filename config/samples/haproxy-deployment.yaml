@@ -17,7 +17,12 @@ spec:
     spec:
       containers:
         - name: default-backend
-          image: haproxy:2.0
+          image: haproxy:2.0-alpine
+          command:
+            - /bin/sh
+          args:
+            - -c
+            - "while true ; do kill -s HUP 1; echo -e \"HTTP/1.1 200 OK\n\n\" | nc -l -p 5555 ; done & haproxy -f /usr/local/etc/haproxy/haproxy.cfg"
           ports:
             - name: healthz
               containerPort: 80
@@ -32,6 +37,23 @@ spec:
               port: healthz
           volumeMounts:
           - mountPath: /usr/local/etc/haproxy/
+            name: network-ingress-configuration
+            readOnly: true
+        - image: quay.io/coreos/configmap-reload:v0.0.1
+          args:
+          - -webhook-url=http://localhost:5555/reload
+          - -volume-dir=/haproxy/
+          - -webhook-method=GET
+          name: config-reloader
+          resources:
+            limits:
+              cpu: 5m
+              memory: 10Mi
+            requests:
+              cpu: 5m
+              memory: 10Mi
+          volumeMounts:
+          - mountPath: /haproxy/
             name: network-ingress-configuration
             readOnly: true
       volumes:
