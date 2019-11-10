@@ -1,5 +1,5 @@
 /*
-Copyright 2019 alexppg.
+Copyright 2019 Little Angry Clouds Inc.
 */
 
 // Package v1 contains API Schema definitions for the networkingress v1 API group

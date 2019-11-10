@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: littleangryclouds/haproxy-network-ingress
-  newTag: latest
+  newTag: 0.1.2

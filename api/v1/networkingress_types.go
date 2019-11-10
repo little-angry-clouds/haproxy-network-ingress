@@ -1,5 +1,5 @@
 /*
-Copyright 2019 alexppg.
+Copyright 2019 Little Angry Clouds Inc.
 */
 
 package v1
@@ -8,13 +8,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// NetworkIngressSpec is the main NetworkIngress specification.
 type NetworkIngressSpec struct {
 	// A list of hosts and its associated ports used to configure the Network
 	// Ingress.
 	Rules []Rule `json:"rules"`
 }
 
-// A rule is the core of a Network Ingress . It defines name, host, port and target port of a rule
+// Rule is the core of a Network Ingress . It defines name, host, port and target port of a rule.
 type Rule struct {
 	// Name of the rule. This will be used as ID
 	Name string `json:"name"`
@@ -26,7 +27,7 @@ type Rule struct {
 	TargetPort int `json:"targetPort"`
 }
 
-// Defines the observed state of NetworkIngress
+// NetworkIngressStatus defines the observed state of NetworkIngress.
 type NetworkIngressStatus struct {
 }
 
@@ -36,7 +37,7 @@ type NetworkIngressStatus struct {
 // +kubebuilder:printcolumn:name="Port",type=integer,JSONPath=`.spec.rules[].port`
 // +kubebuilder:printcolumn:name="TargetPort",type=integer,JSONPath=`.spec.rules[].targetPort`
 
-// NetworkIngress is the Schema for the Network Ingress API
+// NetworkIngress is the Schema for the Network Ingress API.
 type NetworkIngress struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -47,7 +48,7 @@ type NetworkIngress struct {
 
 // +kubebuilder:object:root=true
 
-// NetworkIngressList contains a list of NetworkIngress
+// NetworkIngressList contains a list of NetworkIngress.
 type NetworkIngressList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -1,5 +1,5 @@
 /*
-Copyright 2019 alexppg.
+Copyright 2019 Little Angry Clouds Inc.
 */
 
 package controllers
@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	networkingressv1 "github.com/little-angry-clouds/haproxy-network-ingress/api/v1"
+	helpers "github.com/little-angry-clouds/haproxy-network-ingress/controllers/helpers"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -23,14 +23,7 @@ import (
 
 var ctx context.Context = context.Background()
 
-// Se usa para hacer un sort de los puertos por nombre
-type ByName []corev1.ContainerPort
-
-func (a ByName) Len() int           { return len(a) }
-func (a ByName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByName) Less(i, j int) bool { return a[i].Name < a[j].Name }
-
-// NetworkIngressReconciler reconciles a NetworkIngress object
+// NetworkIngressReconciler stores the arguments passed to the program, main logger and main api client.
 type NetworkIngressReconciler struct {
 	client.Client
 	Log                   logr.Logger
@@ -39,33 +32,13 @@ type NetworkIngressReconciler struct {
 	NetworkIngressClass   string
 }
 
-// We generally want to ignore (not requeue) NotFound errors, since we’ll get a
-// reconciliation request once the object exists, and requeuing in the meantime
-// won’t help.
-func ignoreNotFound(err error) error {
-	if apierrs.IsNotFound(err) {
-		return nil
-	}
-	return err
-}
-
-// Source: https://www.socketloop.com/tutorials/golang-check-if-item-is-in-slice-array
-func intInSlice(int int, list []int) bool {
-	for _, v := range list {
-		if v == int {
-			return true
-		}
-	}
-	return false
-}
-
+// NetworkIngressOperationRequest is the object passed to all functions. It contains the NetworkIngressReconciler and also the event request.
 type NetworkIngressOperationRequest struct {
 	ApiClient *NetworkIngressReconciler
 	Request   ctrl.Request
 }
 
-// Create configmap idempotently
-func createConfigmap(op NetworkIngressOperationRequest, configmapName types.NamespacedName) (error, *corev1.ConfigMap) {
+func createConfigmap(op NetworkIngressOperationRequest, configmapName types.NamespacedName) (*corev1.ConfigMap, error) {
 	var err error
 	var configmap = &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -75,37 +48,30 @@ func createConfigmap(op NetworkIngressOperationRequest, configmapName types.Name
 	}
 	if err = op.ApiClient.Get(ctx, configmapName, configmap); err != nil {
 		if err = op.ApiClient.Create(ctx, configmap); err != nil {
-			return err, nil
+			return nil, err
 		}
 	}
-	return err, configmap
+	return configmap, err
 }
 
-// Update haproxy's configmap
 func updateConfigmap(op NetworkIngressOperationRequest, configMapName types.NamespacedName) error {
 	// var result NetworkIngressOperationResult
 	var networkIngresses networkingressv1.NetworkIngressList
 	var emptyData = make(map[string]string)
 	var itemLogger logr.Logger
-
 	log := op.ApiClient.Log.WithValues("request", op.Request.NamespacedName).WithValues("function", "updateConfigmap")
-
 	// Ensure configmap existes
-	err, configmap := createConfigmap(op, configMapName)
+	configmap, err := createConfigmap(op, configMapName)
 	if err != nil {
 		return err
 	}
-
 	emptyData["haproxy.cfg"] = ""
 	configmap.Data = emptyData
-
 	// Haproxy's deployment healthcheck
 	configmap.Data["haproxy.cfg"] = "defaults\n  # never fail on address resolution\n  default-server init-addr none\n\n# healthz\nfrontend healthz\n  mode http\n  monitor-uri /healthz\n  bind *:80\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms"
-
 	if err := op.ApiClient.List(ctx, &networkIngresses, client.InNamespace(op.Request.Namespace)); err != nil {
 		return err
 	}
-
 	var configmapPart string
 	for _, item := range networkIngresses.Items {
 		// Modify only the assigned network ingress class
@@ -113,15 +79,13 @@ func updateConfigmap(op NetworkIngressOperationRequest, configMapName types.Name
 			itemLogger = log.WithValues("network-ingress", item)
 			for _, rule := range item.Spec.Rules {
 				id := fmt.Sprintf("%s:%d:%d", rule.Name, rule.Port, rule.TargetPort)
-				configmapPart = configmap.Data["haproxy.cfg"] + fmt.Sprintf("\n\n# begining of %s\nfrontend %s\n  bind *:%d\n  mode tcp\n  use_backend %s\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms\n\nbackend %s\n  mode tcp\n  server %s %s:%d\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms\n# end of %s", id, id, rule.Port, id, id, rule.Host, rule.Host, rule.TargetPort, id)
+				configmapPart = configmap.Data["haproxy.cfg"] + fmt.Sprintf("\n\n# beginning of %s\nfrontend %s\n  bind *:%d\n  mode tcp\n  use_backend %s\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms\n\nbackend %s\n  mode tcp\n  server %s %s:%d\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms\n# end of %s", id, id, rule.Port, id, id, rule.Host, rule.Host, rule.TargetPort, id)
 				configmap.Data["haproxy.cfg"] = configmapPart
 				itemLogger.V(2).Info("network-ingress configuration", "value", configmapPart)
 			}
 		}
 	}
-
 	log.V(1).Info("configmap value", "value", configmap.Data["haproxy.cfg"])
-
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		err := op.ApiClient.Update(ctx, configmap)
 		return err
@@ -132,17 +96,13 @@ func updateConfigmap(op NetworkIngressOperationRequest, configMapName types.Name
 	return nil
 }
 
-// Update service ports
-// Return error and list of modified services
-func updateServicePorts(op NetworkIngressOperationRequest, backendServicePorts []corev1.ServicePort, networkIngressClass string, backenDeploymentName string) (error, []string) {
+func updateServicePorts(op NetworkIngressOperationRequest, backendServicePorts []corev1.ServicePort, networkIngressClass string, backenDeploymentName string) ([]string, error) {
 	var desiredBackendServiceList corev1.ServiceList
 	var actualBackendServiceList corev1.ServiceList
 	var backendService corev1.Service
 	var service corev1.Service
 	var modifiedServices []string
-
 	log := op.ApiClient.Log.WithValues("request", op.Request.NamespacedName).WithValues("function", "updateServicePorts")
-
 	// create service's list of ports
 	for _, ports := range backendServicePorts {
 		backendService.Name = ports.Name
@@ -151,12 +111,10 @@ func updateServicePorts(op NetworkIngressOperationRequest, backendServicePorts [
 		desiredBackendServiceList.Items = append(desiredBackendServiceList.Items, backendService)
 		log.V(2).Info("desired backend service", "service", backendService)
 	}
-
 	// list all services created by the controller
 	if err := op.ApiClient.List(ctx, &actualBackendServiceList, client.InNamespace(op.Request.Namespace), client.MatchingLabels{"kubernetes.io/network-ingress.class": networkIngressClass}); err != nil {
-		return err, modifiedServices
+		return modifiedServices, err
 	}
-
 	// update every service with its ports (or create them if they don't exist)
 	for _, item := range desiredBackendServiceList.Items {
 		modifiedServices = append(modifiedServices, item.Namespace+"/"+item.Name)
@@ -165,7 +123,6 @@ func updateServicePorts(op NetworkIngressOperationRequest, backendServicePorts [
 		// labels["kubernetes.io/network-ingress.name"] = op.Request.Name
 		labels["kubernetes.io/network-ingress.class"] = networkIngressClass
 		item.Labels = labels
-		// set selector
 		selector := make(map[string]string)
 		selector["app"] = backenDeploymentName
 		item.Spec.Selector = selector
@@ -181,7 +138,6 @@ func updateServicePorts(op NetworkIngressOperationRequest, backendServicePorts [
 			}
 			return nil
 		})
-
 		if err != nil {
 			err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				err := op.ApiClient.Create(ctx, &item)
@@ -189,34 +145,28 @@ func updateServicePorts(op NetworkIngressOperationRequest, backendServicePorts [
 			})
 			if err != nil {
 				log.Info("unable to create service")
-				return err, modifiedServices
-			} else {
-				log.V(1).Info("service created", "service", item)
-				log.Info("service created")
+				return modifiedServices, err
 			}
+			log.V(1).Info("service created", "service", item)
+			log.Info("service created")
 		} else {
 			log.V(1).Info("service updated", "service", item)
 			log.Info("service updated")
 		}
 	}
 	log.V(1).Info("modified services", "modified-services", modifiedServices)
-	return nil, modifiedServices
+	return modifiedServices, nil
 }
 
-// Update service ports
-// Return error and list of modified services
 func updateBackendPorts(op NetworkIngressOperationRequest, backendDeploymentPorts []corev1.ContainerPort, backendDeploymentName types.NamespacedName) error {
 	var backendDeployment appsv1.Deployment
-
-	log := op.ApiClient.Log.WithValues("networkingress", op.Request.NamespacedName)
-
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		// Get backend's deployment
 		if err := op.ApiClient.Get(ctx, backendDeploymentName, &backendDeployment); err != nil {
-			log.Error(err, fmt.Sprintf("Unable to get %s deployment", backendDeployment.Name))
+			return err
 		}
 		// Sort deployment ports by name to not force a re-deploy when updating
-		sort.Sort(ByName(backendDeploymentPorts))
+		sort.Sort(helpers.ByName(backendDeploymentPorts))
 		backendDeployment.Spec.Template.Spec.Containers[0].Ports = backendDeploymentPorts
 		err := op.ApiClient.Update(ctx, &backendDeployment)
 		return err
@@ -227,8 +177,7 @@ func updateBackendPorts(op NetworkIngressOperationRequest, backendDeploymentPort
 	return nil
 }
 
-// Update service and deployment ports
-func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.NamespacedName) (error, []string) {
+func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.NamespacedName) ([]string, error) {
 	var networkIngresses networkingressv1.NetworkIngressList
 	var containerPort corev1.ContainerPort
 	var servicePort corev1.ServicePort
@@ -243,13 +192,10 @@ func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.
 		},
 	}
 	var networkIngressClass = op.ApiClient.NetworkIngressClass
-
 	log := op.ApiClient.Log.WithValues("request", op.Request.NamespacedName).WithValues("function", "updatePorts")
-
 	if err := op.ApiClient.List(ctx, &networkIngresses, client.InNamespace(op.Request.Namespace), client.MatchingLabels{"kubernetes.io/network-ingress.class": op.ApiClient.NetworkIngressClass}); err != nil {
-		log.Error(err, "Unable to list all NetworkIngress")
+		return nil, err
 	}
-
 	for _, item := range networkIngresses.Items {
 		itemLogger = log.WithValues("network-ingress", item.Name)
 		for _, rule := range item.Spec.Rules {
@@ -259,7 +205,6 @@ func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.
 			containerPort.ContainerPort = int32(rule.Port)
 			backendDeploymentPorts = append(backendDeploymentPorts, containerPort)
 			rulesLogger.V(2).Info("", "container-port", containerPort)
-
 			servicePort.Name = rule.Name
 			servicePort.Port = int32(rule.Port)
 			servicePort.TargetPort = intstr.IntOrString{IntVal: int32(rule.TargetPort)}
@@ -267,55 +212,41 @@ func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.
 			backendServicePorts = append(backendServicePorts, servicePort)
 		}
 	}
-
-	err, modifiedServices := updateServicePorts(op, backendServicePorts, networkIngressClass, backendDeploymentName.Name)
+	modifiedServices, err := updateServicePorts(op, backendServicePorts, networkIngressClass, backendDeploymentName.Name)
 	if err != nil {
-		log.Error(err, "there was an error updating the service ports")
-	} else {
-		log.Info("services updated correctly")
+		return nil, err
 	}
-
+	log.Info("services updated correctly")
 	err = updateBackendPorts(op, backendDeploymentPorts, backendDeploymentName)
 	if err != nil {
-		log.Error(err, "there was an error updating the backend ports")
-	} else {
-		log.Info("deployment updated correctly")
+		return nil, err
 	}
-
-	return nil, modifiedServices
+	log.Info("deployment updated correctly")
+	return modifiedServices, nil
 }
 
-// delete unused services
-// compare previously modified services with the existent services
-// if there's a service which wasn't modified in a previous step, it means it
-// doesn't have an associated NetworkIngress
 func deleteUnusedServices(op NetworkIngressOperationRequest, modifiedServices []string) error {
 	var existentServicesNames []string
 	var existentServicesList corev1.ServiceList
 	var networkIngressClass = op.ApiClient.NetworkIngressClass
-
 	log := op.ApiClient.Log.WithValues("request", op.Request.NamespacedName).WithValues("function", "deleteUnusedServices")
-
 	if err := op.ApiClient.List(ctx, &existentServicesList, client.InNamespace(op.Request.Namespace), client.MatchingLabels{"kubernetes.io/network-ingress.class": networkIngressClass}); err != nil {
 		return err
 	}
-
 	for _, service := range existentServicesList.Items {
 		existentServicesNames = append(existentServicesNames, service.Namespace+"/"+service.Name)
 	}
 	log.V(1).Info("modified service names", "service-name", modifiedServices)
 	log.V(1).Info("existent service names", "service-name", existentServicesNames)
-	deletableServices := difference(existentServicesNames, modifiedServices)
+	deletableServices := helpers.GetMapDifferences(existentServicesNames, modifiedServices)
 	log.V(1).Info("service names to delete", "service-name", deletableServices)
-
 	for _, existingService := range existentServicesList.Items {
 		for _, deletableService := range deletableServices {
 			if existingService.Namespace+"/"+existingService.Name == deletableService {
 				if err := op.ApiClient.Delete(ctx, &existingService); err != nil {
 					return err
-				} else {
-					log.V(1).Info("service deleted", "service-name", existingService.Namespace+"/"+existingService.Name)
 				}
+				log.V(1).Info("service deleted", "service-name", existingService.Namespace+"/"+existingService.Name)
 			}
 		}
 	}
@@ -327,6 +258,7 @@ func deleteUnusedServices(op NetworkIngressOperationRequest, modifiedServices []
 // +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;create;update;watch;delete
 // +kubebuilder:rbac:groups=networkingress.little-angry-clouds.k8s.io,resources=networkingresses,verbs=get;list;watch
 
+// Reconcile reconciles the event requests.
 func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// Initial setup
 	var op NetworkIngressOperationRequest
@@ -334,12 +266,10 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	op.ApiClient = r
 	op.Request = req
 	log := op.ApiClient.Log.WithValues("request", op.Request.NamespacedName).WithValues("function", "Reconciler")
-
 	// Assume that all happens in the event request namespace
 	namespace := op.Request.Namespace
 	configmapName := types.NamespacedName{Name: op.ApiClient.ConfigmapName, Namespace: namespace}
 	backendDeploymentName := types.NamespacedName{Name: op.ApiClient.BackendDeploymentName, Namespace: namespace}
-
 	var action string
 	// See if updating or deleting NetworkIngress for logging purposes
 	if err := op.ApiClient.Get(ctx, req.NamespacedName, &testNetworkIngress); err != nil {
@@ -347,7 +277,6 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	} else {
 		action = "update"
 	}
-
 	if testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] == "" {
 		testNetworkIngress.Labels = make(map[string]string)
 		testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] = "haproxy"
@@ -359,9 +288,7 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			log.Error(err, "there was an error updating the network ingress")
 			return ctrl.Result{}, err
 		}
-
 	}
-
 	if op.ApiClient.NetworkIngressClass == testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] {
 		log.V(1).Info("the network-ingress class does match")
 	} else {
@@ -370,56 +297,32 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 			"argument-class", op.ApiClient.NetworkIngressClass)
 		return ctrl.Result{}, nil
 	}
-
 	if action == "delete" {
 		log.Info("deleting network-ingress")
 	} else if action == "update" {
 		log.Info("updating NetworkIngress")
 	}
-
-	// Update configmap
 	err := updateConfigmap(op, configmapName)
 	if err != nil {
 		log.Error(err, "there was an error updating the configmap")
 		return ctrl.Result{}, err
-	} else {
-		log.Info("configmap updated")
 	}
-
-	// update services's and backend's ports
-	err, modifiedServices := updatePorts(op, backendDeploymentName)
+	log.Info("configmap updated")
+	modifiedServices, err := updatePorts(op, backendDeploymentName)
 	if err != nil {
 		log.Error(err, "there was an error updating the deployment and services ports")
 		return ctrl.Result{}, err
-
-	} else {
-		log.Info("ports updated")
 	}
-
+	log.Info("ports updated")
 	err = deleteUnusedServices(op, modifiedServices)
 	if err != nil {
 		log.Error(err, "there was an error deleting unused services")
 		return ctrl.Result{}, err
 	}
-
 	return ctrl.Result{}, nil
 }
 
-// Source: https://stackoverflow.com/questions/19374219/how-to-find-the-difference-between-two-slices-of-strings-in-golang
-func difference(a, b []string) []string {
-	mb := make(map[string]struct{}, len(b))
-	for _, x := range b {
-		mb[x] = struct{}{}
-	}
-	var diff []string
-	for _, x := range a {
-		if _, found := mb[x]; !found {
-			diff = append(diff, x)
-		}
-	}
-	return diff
-}
-
+// SetupWithManager calls NetworkIngressReconciler
 func (r *NetworkIngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&networkingressv1.NetworkIngress{}).

@@ -1,5 +1,5 @@
 /*
-Copyright 2019 alexppg.
+Copyright 2019 Little Angry Clouds Inc.
 */
 
 package main
