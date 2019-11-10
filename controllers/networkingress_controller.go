@@ -108,12 +108,15 @@ func updateConfigmap(op NetworkIngressOperationRequest, configMapName types.Name
 
 	var configmapPart string
 	for _, item := range networkIngresses.Items {
-		itemLogger = log.WithValues("network-ingress", item)
-		for _, rule := range item.Spec.Rules {
-			id := fmt.Sprintf("%s:%d:%d", rule.Name, rule.Port, rule.TargetPort)
-			configmapPart = configmap.Data["haproxy.cfg"] + fmt.Sprintf("\n\n# begining of %s\nfrontend %s\n  bind *:%d\n  mode tcp\n  use_backend %s\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms\n\nbackend %s\n  mode tcp\n  server %s %s:%d\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms\n# end of %s", id, id, rule.Port, id, id, rule.Host, rule.Host, rule.TargetPort, id)
-			configmap.Data["haproxy.cfg"] = configmapPart
-			itemLogger.V(2).Info("network-ingress configuration", "value", configmapPart)
+		// Modify only the assigned network ingress class
+		if item.Labels["kubernetes.io/network-ingress.class"] == op.ApiClient.NetworkIngressClass {
+			itemLogger = log.WithValues("network-ingress", item)
+			for _, rule := range item.Spec.Rules {
+				id := fmt.Sprintf("%s:%d:%d", rule.Name, rule.Port, rule.TargetPort)
+				configmapPart = configmap.Data["haproxy.cfg"] + fmt.Sprintf("\n\n# begining of %s\nfrontend %s\n  bind *:%d\n  mode tcp\n  use_backend %s\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms\n\nbackend %s\n  mode tcp\n  server %s %s:%d\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms\n# end of %s", id, id, rule.Port, id, id, rule.Host, rule.Host, rule.TargetPort, id)
+				configmap.Data["haproxy.cfg"] = configmapPart
+				itemLogger.V(2).Info("network-ingress configuration", "value", configmapPart)
+			}
 		}
 	}
 
@@ -158,7 +161,8 @@ func updateServicePorts(op NetworkIngressOperationRequest, backendServicePorts [
 	for _, item := range desiredBackendServiceList.Items {
 		modifiedServices = append(modifiedServices, item.Namespace+"/"+item.Name)
 		labels := make(map[string]string)
-		labels["kubernetes.io/network-ingress.name"] = op.Request.Name
+		// TODO this label should be set with it's ningress, not the one that makes the request
+		// labels["kubernetes.io/network-ingress.name"] = op.Request.Name
 		labels["kubernetes.io/network-ingress.class"] = networkIngressClass
 		item.Labels = labels
 		// set selector
@@ -242,7 +246,7 @@ func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.
 
 	log := op.ApiClient.Log.WithValues("request", op.Request.NamespacedName).WithValues("function", "updatePorts")
 
-	if err := op.ApiClient.List(ctx, &networkIngresses, client.InNamespace(op.Request.Namespace)); err != nil {
+	if err := op.ApiClient.List(ctx, &networkIngresses, client.InNamespace(op.Request.Namespace), client.MatchingLabels{"kubernetes.io/network-ingress.class": op.ApiClient.NetworkIngressClass}); err != nil {
 		log.Error(err, "Unable to list all NetworkIngress")
 	}
 
@@ -336,10 +340,40 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	configmapName := types.NamespacedName{Name: op.ApiClient.ConfigmapName, Namespace: namespace}
 	backendDeploymentName := types.NamespacedName{Name: op.ApiClient.BackendDeploymentName, Namespace: namespace}
 
+	var action string
 	// See if updating or deleting NetworkIngress for logging purposes
-		log.Info("deleting network-ingress")
 	if err := op.ApiClient.Get(ctx, req.NamespacedName, &testNetworkIngress); err != nil {
+		action = "delete"
 	} else {
+		action = "update"
+	}
+
+	if testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] == "" {
+		testNetworkIngress.Labels = make(map[string]string)
+		testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] = "haproxy"
+		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			err := op.ApiClient.Update(ctx, &testNetworkIngress)
+			return err
+		})
+		if err != nil {
+			log.Error(err, "there was an error updating the network ingress")
+			return ctrl.Result{}, err
+		}
+
+	}
+
+	if op.ApiClient.NetworkIngressClass == testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] {
+		log.V(1).Info("the network-ingress class does match")
+	} else {
+		log.V(1).Info("the network-ingress class doesn't match", "network-ingress-class",
+			testNetworkIngress.Labels["kubernetes.io/network-ingress.class"],
+			"argument-class", op.ApiClient.NetworkIngressClass)
+		return ctrl.Result{}, nil
+	}
+
+	if action == "delete" {
+		log.Info("deleting network-ingress")
+	} else if action == "update" {
 		log.Info("updating NetworkIngress")
 	}
 

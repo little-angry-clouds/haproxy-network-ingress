@@ -3,6 +3,8 @@ apiVersion: networkingress.little-angry-clouds.k8s.io/v1
 kind: NetworkIngress
 metadata:
   name: networkingress-sample-1
+  labels:
+    kubernetes.io/network-ingress.class: haproxy
 spec:
   rules:
     - host: mongo.db.com
@@ -20,3 +22,17 @@ spec:
       port: 3306
       targetPort: 3306
       name: mysql
+---
+# This shouldn't be reconcilied by the default class
+apiVersion: networkingress.little-angry-clouds.k8s.io/v1
+kind: NetworkIngress
+metadata:
+  name: networkingress-sample-3
+  labels:
+    kubernetes.io/network-ingress.class: haproxy2
+spec:
+  rules:
+    - host: google.com
+      port: 443
+      targetPort: 443
+      name: google
