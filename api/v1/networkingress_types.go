@@ -17,13 +17,13 @@ type NetworkIngressSpec struct {
 // A rule is the core of a Network Ingress . It defines name, host, port and target port of a rule
 type Rule struct {
 	// Name of the rule. This will be used as ID
-	Name       string `json:"name"`
+	Name string `json:"name"`
 	// Host of the rule. This is the destination machine that Haproxy will conecct to.
-	Host       string `json:"host"`
+	Host string `json:"host"`
 	// Port of the rule. This is the port that will be configured in the service.
-	Port       int    `json:"port"`
+	Port int `json:"port"`
 	// Target port of the rule. This is the port that will be configured in the Haproxy' s configuration
-	TargetPort int    `json:"targetPort"`
+	TargetPort int `json:"targetPort"`
 }
 
 // Defines the observed state of NetworkIngress

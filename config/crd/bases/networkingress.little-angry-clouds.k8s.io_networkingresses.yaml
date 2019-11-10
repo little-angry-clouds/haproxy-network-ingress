@@ -29,7 +29,7 @@ spec:
   subresources: {}
   validation:
     openAPIV3Schema:
-      description: NetworkIngress is the Schema for the networkingresses API
+      description: NetworkIngress is the Schema for the Network Ingress API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
