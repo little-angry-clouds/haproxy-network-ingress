@@ -229,6 +229,8 @@ func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.
 	var containerPort corev1.ContainerPort
 	var servicePort corev1.ServicePort
 	var backendServicePorts []corev1.ServicePort
+	var itemLogger logr.Logger
+	var rulesLogger logr.Logger
 	var backendDeploymentPorts = []corev1.ContainerPort{
 		{
 			Name:          "healthz",
@@ -236,8 +238,6 @@ func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.
 			ContainerPort: 80,
 		},
 	}
-	var itemLogger logr.Logger
-	var rulesLogger logr.Logger
 	var networkIngressClass = op.ApiClient.NetworkIngressClass
 
 	log := op.ApiClient.Log.WithValues("request", op.Request.NamespacedName).WithValues("function", "updatePorts")
@@ -331,14 +331,14 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	op.Request = req
 	log := op.ApiClient.Log.WithValues("request", op.Request.NamespacedName).WithValues("function", "Reconciler")
 
-	// Assume that all happens in the Event Request namespace
+	// Assume that all happens in the event request namespace
 	namespace := op.Request.Namespace
-	configmapName := types.NamespacedName{Name: r.ConfigmapName, Namespace: namespace}
-	backendDeploymentName := types.NamespacedName{Name: r.BackendDeploymentName, Namespace: namespace}
+	configmapName := types.NamespacedName{Name: op.ApiClient.ConfigmapName, Namespace: namespace}
+	backendDeploymentName := types.NamespacedName{Name: op.ApiClient.BackendDeploymentName, Namespace: namespace}
 
 	// See if updating or deleting NetworkIngress for logging purposes
-	if err := r.Get(ctx, req.NamespacedName, &testNetworkIngress); err != nil {
 		log.Info("deleting network-ingress")
+	if err := op.ApiClient.Get(ctx, req.NamespacedName, &testNetworkIngress); err != nil {
 	} else {
 		log.Info("updating NetworkIngress")
 	}
