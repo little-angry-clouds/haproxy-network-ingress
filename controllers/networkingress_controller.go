@@ -226,7 +226,7 @@ func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.
 	return modifiedServices, nil
 }
 
-func deleteUnusedServices(op NetworkIngressOperationRequest, modifiedServices []string) error {
+func updateServices(op NetworkIngressOperationRequest, modifiedServices []string) error {
 	var existentServicesNames []string
 	var existentServicesList corev1.ServiceList
 	var networkIngressClass = op.ApiClient.NetworkIngressClass
@@ -315,7 +315,7 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		return ctrl.Result{}, err
 	}
 	log.Info("ports updated")
-	err = deleteUnusedServices(op, modifiedServices)
+	err = updateServices(op, modifiedServices)
 	if err != nil {
 		log.Error(err, "there was an error deleting unused services")
 		return ctrl.Result{}, err
