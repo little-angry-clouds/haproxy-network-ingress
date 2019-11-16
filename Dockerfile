@@ -1,4 +1,4 @@
-# Build the manager binary
+# Build the network-ingress-controller binary
 FROM golang:1.12.5 as builder
 
 WORKDIR /workspace
@@ -15,13 +15,13 @@ COPY api/ api/
 COPY controllers/ controllers/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o network-ingress-controller main.go
 
-# Use distroless as minimal base image to package the manager binary
+# Use distroless as minimal base image to package the network-ingress-controller binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot 
+FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY --from=builder /workspace/manager .
+COPY --from=builder /workspace/network-ingress-controller .
 USER nonroot:nonroot
 
-ENTRYPOINT ["/manager"]
+ENTRYPOINT ["/network-ingress-controller"]
