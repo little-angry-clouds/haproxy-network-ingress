@@ -6,6 +6,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	networkingressv1 "github.com/little-angry-clouds/haproxy-network-ingress/api/v1"
@@ -35,6 +36,7 @@ func main() {
 	var configmapName string
 	var backendDeploymentName string
 	var networkIngressClass string
+	var electionID string
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
@@ -43,13 +45,15 @@ func main() {
 	flag.StringVar(&backendDeploymentName, "backend-name", "network-ingress-backend", "Backend's deployment name.")
 	flag.StringVar(&networkIngressClass, "network-ingress-class", "haproxy", "Name of the network ingress class.")
 	flag.Parse()
-
 	ctrl.SetLogger(zap.Logger(true))
+
+	electionID = fmt.Sprintf("%v-%v", networkIngressClass, "network-ingress-controller-leader")
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		LeaderElection:     enableLeaderElection,
+		LeaderElectionID:   electionID,
 		Port:               9443,
 	})
 	if err != nil {
