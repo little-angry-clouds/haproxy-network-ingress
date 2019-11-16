@@ -277,26 +277,26 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		action = "delete"
 	} else {
 		action = "update"
-	}
-	if testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] == "" {
-		testNetworkIngress.Labels = make(map[string]string)
-		testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] = "haproxy"
-		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-			err := op.ApiClient.Update(ctx, &testNetworkIngress)
-			return err
-		})
-		if err != nil {
-			log.Error(err, "there was an error updating the network ingress")
-			return ctrl.Result{}, err
+		if testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] == "" {
+			testNetworkIngress.Labels = make(map[string]string)
+			testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] = "haproxy"
+			err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+				err := op.ApiClient.Update(ctx, &testNetworkIngress)
+				return err
+			})
+			if err != nil {
+				log.Error(err, "there was an error updating the network ingress")
+				return ctrl.Result{}, err
+			}
 		}
-	}
-	if op.ApiClient.NetworkIngressClass == testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] {
-		log.V(1).Info("the network-ingress class does match")
-	} else {
-		log.V(1).Info("the network-ingress class doesn't match", "network-ingress-class",
-			testNetworkIngress.Labels["kubernetes.io/network-ingress.class"],
-			"argument-class", op.ApiClient.NetworkIngressClass)
-		return ctrl.Result{}, nil
+		if op.ApiClient.NetworkIngressClass == testNetworkIngress.Labels["kubernetes.io/network-ingress.class"] {
+			log.V(1).Info("the network-ingress class does match")
+		} else {
+			log.V(1).Info("the network-ingress class doesn't match", "network-ingress-class",
+				testNetworkIngress.Labels["kubernetes.io/network-ingress.class"],
+				"argument-class", op.ApiClient.NetworkIngressClass)
+			return ctrl.Result{}, nil
+		}
 	}
 	if action == "delete" {
 		log.Info("deleting network-ingress")
