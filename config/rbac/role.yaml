@@ -37,7 +37,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - networkingress.little-angry-clouds.k8s.io
+  - little-angry-clouds.k8s.io
   resources:
   - networkingresses
   verbs:

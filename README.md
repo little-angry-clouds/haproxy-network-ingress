@@ -38,7 +38,7 @@ Ingress installed in your cluster. You would need to create the next resource to
 expose an example RDS:
 
 ``` yaml
-apiVersion: networkingress.little-angry-clouds.k8s.io/v1
+apiVersion: little-angry-clouds.k8s.io/v1
 kind: NetworkIngress
 metadata:
   name: my-cool-rds
@@ -89,7 +89,7 @@ service.
 To do it, you would create the next Network Ingress:
 
 ``` yaml
-apiVersion: networkingress.little-angry-clouds.k8s.io/v1
+apiVersion: little-angry-clouds.k8s.io/v1
 kind: NetworkIngress
 metadata:
   name: my-cool-mysql

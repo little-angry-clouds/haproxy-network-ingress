@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   creationTimestamp: null
-  name: networkingresses.networkingress.little-angry-clouds.k8s.io
+  name: networkingresses.little-angry-clouds.k8s.io
 spec:
   additionalPrinterColumns:
   - JSONPath: .spec.rules[].name
@@ -16,7 +16,7 @@ spec:
   - JSONPath: .spec.rules[].targetPort
     name: TargetPort
     type: integer
-  group: networkingress.little-angry-clouds.k8s.io
+  group: little-angry-clouds.k8s.io
   names:
     kind: NetworkIngress
     listKind: NetworkIngressList
@@ -29,7 +29,7 @@ spec:
   subresources: {}
   validation:
     openAPIV3Schema:
-      description: NetworkIngress is the Schema for the Network Ingress API
+      description: NetworkIngress is the Schema for the Network Ingress API.
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -44,13 +44,14 @@ spec:
         metadata:
           type: object
         spec:
+          description: NetworkIngressSpec is the main NetworkIngress specification.
           properties:
             rules:
               description: A list of hosts and its associated ports used to configure
                 the Network Ingress.
               items:
-                description: A rule is the core of a Network Ingress . It defines
-                  name, host, port and target port of a rule
+                description: Rule is the core of a Network Ingress . It defines name,
+                  host, port and target port of a rule.
                 properties:
                   host:
                     description: Host of the rule. This is the destination machine
@@ -78,7 +79,7 @@ spec:
           - rules
           type: object
         status:
-          description: Defines the observed state of NetworkIngress
+          description: NetworkIngressStatus defines the observed state of NetworkIngress.
           type: object
       type: object
   version: v1

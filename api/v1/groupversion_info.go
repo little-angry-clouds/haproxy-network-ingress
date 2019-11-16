@@ -4,7 +4,7 @@ Copyright 2019 Little Angry Clouds Inc.
 
 // Package v1 contains API Schema definitions for the networkingress v1 API group
 // +kubebuilder:object:generate=true
-// +groupName=networkingress.little-angry-clouds.k8s.io
+// +groupName=little-angry-clouds.k8s.io
 package v1
 
 import (
@@ -14,7 +14,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "networkingress.little-angry-clouds.k8s.io", Version: "v1"}
+	GroupVersion = schema.GroupVersion{Group: "little-angry-clouds.k8s.io", Version: "v1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

@@ -256,7 +256,7 @@ func deleteUnusedServices(op NetworkIngressOperationRequest, modifiedServices []
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;create;update;watch
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;update;watch
 // +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;create;update;watch;delete
-// +kubebuilder:rbac:groups=networkingress.little-angry-clouds.k8s.io,resources=networkingresses,verbs=get;list;watch
+// +kubebuilder:rbac:groups=little-angry-clouds.k8s.io,resources=networkingresses,verbs=get;list;watch;update
 
 // Reconcile reconciles the event requests.
 func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
