@@ -115,10 +115,14 @@ spec:
 
 This way, you'll have one LB with multiple ports pointing to your precious services.
 
-## Deployment
+## Install
 
 The recommended way to use this controller is using it's [helm
 chart](https://github.com/little-angry-clouds/charts/tree/master/haproxy-network-ingress).
+
+But if you want to use the standalone binary, you may do it. You can download
+the compiled binary in the [releases
+page](https://github.com/little-angry-clouds/haproxy-network-ingress/releases/).
 
 ## Issues
 You may open an issue with any problem or question you have.
