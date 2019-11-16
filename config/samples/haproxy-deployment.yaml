@@ -2,21 +2,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: default-backend
+  name: backend
   labels:
-    app: default-backend
+    app: backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: haproxy-network-ingress-default-backend
+      app: haproxy-network-ingress-backend
   template:
     metadata:
       labels:
-        app: haproxy-network-ingress-default-backend
+        app: haproxy-network-ingress-backend
     spec:
       containers:
-        - name: default-backend
+        - name: backend
           image: haproxy:2.0-alpine
           command:
             - /bin/sh
