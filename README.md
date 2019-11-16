@@ -12,7 +12,7 @@ Network Ingress resource that uses ConfigMap to store the Haproxy configuration.
 It's a resource very similar to the ingress in the way
 that exposes kubernetes aplications (it can export arbitrary things, thought),
 but if the ingress exposes them as a HTTP proxy, the Network Ingress exposes
-them as a TCP proxy.
+them as a TCP proxy. You may want to see it's [design document](./docs/network-ingress-design.md).
 
 Why would you want a TCP proxy in Kubernetes, you may ask? There's at least two
 use cases (if you find more, please open an issue!).
