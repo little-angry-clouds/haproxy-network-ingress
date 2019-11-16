@@ -67,8 +67,8 @@ func updateConfigmap(op NetworkIngressOperationRequest, configMapName types.Name
 	}
 	emptyData["haproxy.cfg"] = ""
 	configmap.Data = emptyData
-	// Haproxy's deployment healthcheck
-	configmap.Data["haproxy.cfg"] = "defaults\n  # never fail on address resolution\n  default-server init-addr none\n\n# healthz\nfrontend healthz\n  mode http\n  monitor-uri /healthz\n  bind *:80\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms"
+	// Haproxy's deployment healthcheck and sane defaults
+	configmap.Data["haproxy.cfg"] = "global\n # Log to stdout\n log stdout format raw local0 info\ndefaults\n # never fail on address resolution\n default-server init-addr last,libc,none\n# healthz\n frontend healthz\n mode http\n monitor-uri /healthz\n bind *:80\n timeout client 50000ms"
 	if err := op.ApiClient.List(ctx, &networkIngresses, client.InNamespace(op.Request.Namespace)); err != nil {
 		return err
 	}
@@ -79,7 +79,8 @@ func updateConfigmap(op NetworkIngressOperationRequest, configMapName types.Name
 			itemLogger = log.WithValues("network-ingress", item)
 			for _, rule := range item.Spec.Rules {
 				id := fmt.Sprintf("%s:%d:%d", rule.Name, rule.Port, rule.TargetPort)
-				configmapPart = configmap.Data["haproxy.cfg"] + fmt.Sprintf("\n\n# beginning of %s\nfrontend %s\n  bind *:%d\n  mode tcp\n  use_backend %s\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms\n\nbackend %s\n  mode tcp\n  server %s %s:%d\n  timeout connect 5000ms\n  timeout client 50000ms\n  timeout server 50000ms\n# end of %s", id, id, rule.Port, id, id, rule.Host, rule.Host, rule.TargetPort, id)
+
+				configmapPart = configmap.Data["haproxy.cfg"] + fmt.Sprintf("\n\n# beginning of %s\nfrontend %s\n  bind *:%d\n  option tcplog\n  log stdout format raw local0 info\n  mode tcp\n  use_backend %s\n  timeout client 50000ms\n\nbackend %s\n  mode tcp\n  server %s %s:%d\n  timeout connect 5000ms\n  timeout server 50000ms\n# end of %s", id, id, rule.Port, id, id, rule.Name, rule.Host, rule.TargetPort, id)
 				configmap.Data["haproxy.cfg"] = configmapPart
 				itemLogger.V(2).Info("network-ingress configuration", "value", configmapPart)
 			}
