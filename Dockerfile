@@ -23,5 +23,4 @@ FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /workspace/network-ingress-controller .
 USER nonroot:nonroot
-
 ENTRYPOINT ["/network-ingress-controller"]
