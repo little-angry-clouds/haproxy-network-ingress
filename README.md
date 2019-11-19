@@ -4,6 +4,8 @@ This is a work in progress, there's not even a first release. Use under your ris
 [![Go Report Card](https://goreportcard.com/badge/github.com/little-angry-clouds/haproxy-network-ingress)](https://goreportcard.com/report/github.com/little-angry-clouds/haproxy-network-ingress)
 [![GitHub license](https://img.shields.io/github/license/little-angry-clouds/haproxy-network-ingress.svg)](https://github.com/little-angry-clouds/haproxy-network-ingress/blob/master/LICENSE)
 
+[![Asciinema](https://asciinema.org/a/282418.svg)](https://asciinema.org/a/282418?autoplay=1)
+
 ## Description
 This repository contains the Haproxy controller build around the Kubernetes
 Network Ingress resource that uses ConfigMap to store the Haproxy configuration.
