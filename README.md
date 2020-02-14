@@ -129,6 +129,44 @@ page](https://github.com/little-angry-clouds/haproxy-network-ingress/releases/).
 ## Issues
 You may open an issue with any problem or question you have.
 
+## Tests
+
+There's actually some integration tests that you can see in the `tests`
+directory. They're done with  [[https://github.com/bats-core/bats-core][bats]],
+a tool whoose name stands for "Bash Automated Testing System". It uses kind to
+create a temporary cluster, deploys it and executes the tests. It deletes it
+when the tests are done.
+
+To speed up things when developing, the first time you execute you may export
+the variable `BATS_CLEAN_TEST=false`, which will make the cluster to still be
+available when finishing the tests. Then, in the next execution, you get the
+test ID and and export it to the variable `BATS_TEST_ID=$test`. For example:
+
+``` bash
+> time BATS_CLEAN_TEST=false bats tests
+  Test cluster with ID: U4UFsZ4 ...
+ ✓ verify that the controller creates correctly the services
+ ✓ verify that the controller creates correctly the deployment's ports
+ ✓ verify the uninstallation
+
+4 tests, 0 failures
+
+BATS_CLEAN_TEST=false bats tests  15,02s user 5,90s system 14% cpu 2:24,18 total
+```
+
+And without re-creating the cluster:
+
+``` bash
+> time BATS_TEST_ID=U4UFsZ4 bats tests
+ ✓ verify the components of the deployment
+ ✓ verify that the controller creates correctly the services
+ ✓ verify that the controller creates correctly the deployment's ports
+ ✓ verify the uninstallation
+
+4 tests, 0 failures
+BATS_TEST_ID=LyLHV0K bats tests  9,50s user 1,79s system 20% cpu 56,298 total
+```
+
 ## Thanks
 As you may have noticed, this README it's very similar to the one on the ![NGINX
 Ingress repository](https://github.com/kubernetes/ingress-nginx), so thanks to

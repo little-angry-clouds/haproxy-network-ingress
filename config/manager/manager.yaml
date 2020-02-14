@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - command:
-        - /manager
+        - /network-ingress-controller
         args:
         - --enable-leader-election
         - --backend-name=haproxy-network-ingress-backend

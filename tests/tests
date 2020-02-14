@@ -1,0 +1,106 @@
+#!/bin/env bash
+
+load "lib/create-kind-cluster/load"
+
+load "lib/bats-support/load"
+load "lib/bats-assert/load"
+load "lib/detik/lib/detik"
+
+DETIK_CLIENT_NAME="kubectl-v1.16.4"
+
+function setup() {
+  # Create the cluster only in first test
+  if [[ "$BATS_TEST_NUMBER" -eq 1 ]]
+  then
+    teardownCallback=$(create_cluster)
+  fi
+}
+
+function teardown() {
+  # FIXME it shouldn't be need to harcode the tests number
+  # if [[ "$BATS_TEST_NUMBER" -eq "${#BATS_TEST_NAMES[@]}" ]]
+  if [[ "${#BATS_TEST_NAMES[@]}" -eq 2 ]]
+  then
+    eval "$teardownCallback"
+  fi
+}
+
+@test "verify the components of the deployment" {
+  IMG=littleangryclouds/haproxy-network-ingress:0.2.0
+  export IMG
+  run make --directory ../ install
+  assert_success
+  run make --directory ../ deploy
+  assert_success
+  run verify "there is 1 crd named 'networkingress'"
+  assert_success
+  run verify "there is 1 clusterrole named 'haproxy-network-ingress-manager-role'"
+  assert_success
+  run verify "there is 1 clusterrolebinding named 'haproxy-network-ingress-manager-rolebinding'"
+  assert_success
+  run verify "there is 1 role named 'haproxy-network-ingress-leader-election-role'"
+  assert_success
+  run verify "there is 1 rolebinding named 'haproxy-network-ingress-leader-election-rolebinding'"
+  assert_success
+  run verify "there is 1 configmap named 'haproxy-network-ingress-network-ingress-configuration'"
+  assert_success
+  run try "at most 20 times every 5s to find 1 pod named 'haproxy-network-ingress-backend' with 'status' being 'running'"
+  assert_success
+  run try "at most 5 times every 5s to find 1 pod named 'haproxy-network-ingress-controller' with 'status' being 'running'"
+  assert_success
+}
+
+# FIXME beware, sometims it fives false positive when the resource doesn't exist it doesn't fail
+@test "verify that the controller creates correctly the services" {
+  # FIXME it seems that it doesn't escape the dots
+  # verify "'.metadata.labels.kubernetes.io/network-ingress.class:' is 'haproxy' for services named 'test-network-ingress-controller'"
+  # assert_success
+  verify "there is 0 services named 'test-google'"
+  assert_success
+  verify "'port' is '3306' for services named 'test-mysql'"
+  assert_success
+  verify "'targetPort' is '3306' for services named 'test-mysql'"
+  assert_success
+  verify "'port' is '27017' for services named 'test-mongo'"
+  assert_success
+  verify "'targetPort' is '27017' for services named 'test-mongo'"
+  assert_success
+  verify "'port' is '8080' for services named 'test-weather'"
+  assert_success
+  verify "'targetPort' is '8080' for services named 'test-weather'"
+  assert_success
+}
+
+@test "verify that the controller creates correctly the deployment's ports" {
+  # Wait a little bit to give time to the controller to modify the backend
+  sleep 30
+  verify "'.spec.template.spec.containers[*].ports[*].name' is 'healthz,test-mongo,test-mysql,test-weather' for deploy named 'haproxy-network-ingress-backend'"
+  assert_success
+  verify "'.spec.template.spec.containers[*].ports[*].containerPort' is '80,27017,3306,8080' for deploy named 'haproxy-network-ingress-backend'"
+  assert_success
+}
+
+# TODO verify configmap
+# TODO verify some curls
+
+@test "verify the uninstallation" {
+  run make --directory ../ delete
+  run verify "there is 0 crd named 'networkingress'"
+  assert_success
+  run try "at most 5 times every 5s to find 0 pod named 'haproxy-network-ingress-backend' with 'status' being 'running'"
+  assert_success
+  run try "at most 5 times every 5s to find 0 pod named 'haproxy-network-ingress-controller' with 'status' being 'running'"
+  assert_success
+  run verify "there is 0 clusterrole named 'haproxy-network-ingress-manager-role'"
+  assert_success
+  run verify "there is 0 clusterrolebinding named 'haproxy-network-ingress-manager-rolebinding'"
+  assert_success
+  run verify "there is 0 role named 'haproxy-network-ingress-leader-election-role'"
+  assert_success
+  run verify "there is 0 rolebinding named 'haproxy-network-ingress-leader-election-rolebinding'"
+  assert_success
+  run verify "there is 0 configmap named 'haproxy-network-ingress-network-ingress-configuration'"
+  assert_success
+  run verify "there is 0 crd named 'networkingresses'"
+  assert_success
+}

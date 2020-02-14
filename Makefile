@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= littleangryclouds/haproxy-network-ingress:latest
+IMG ?= littleangryclouds/haproxy-network-ingress:0.2.0
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"

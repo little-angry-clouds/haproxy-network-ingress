@@ -10,7 +10,7 @@ spec:
     - host: mongo.db.com
       port: 27017
       targetPort: 27017
-      name: mongo
+      name: test-mongo
 ---
 apiVersion: little-angry-clouds.k8s.io/v1
 kind: NetworkIngress
@@ -21,7 +21,7 @@ spec:
     - host: mysql.db.com
       port: 3306
       targetPort: 3306
-      name: mysql
+      name: test-mysql
 ---
 # This shouldn't be reconcilied by the default class
 apiVersion: little-angry-clouds.k8s.io/v1
@@ -35,4 +35,16 @@ spec:
     - host: google.com
       port: 443
       targetPort: 443
-      name: google
+      name: test-google
+---
+# Used by the integration test
+apiVersion: little-angry-clouds.k8s.io/v1
+kind: NetworkIngress
+metadata:
+  name: networkingress-sample-4
+spec:
+  rules:
+    - host: wttr.in
+      port: 8080
+      targetPort: 8080
+      name: test-weather
