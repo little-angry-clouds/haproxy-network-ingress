@@ -10,15 +10,18 @@ import (
 	"github.com/go-logr/logr"
 	networkingressv1 "github.com/little-angry-clouds/haproxy-network-ingress/api/v1"
 	helpers "github.com/little-angry-clouds/haproxy-network-ingress/controllers/helpers"
+	"hash/fnv"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/util/retry"
+	"math/rand"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
+	"strconv"
 )
 
 var ctx context.Context = context.Background()
@@ -55,12 +58,11 @@ func createConfigmap(op NetworkIngressOperationRequest, configmapName types.Name
 }
 
 func updateConfigmap(op NetworkIngressOperationRequest, configMapName types.NamespacedName) error {
-	// var result NetworkIngressOperationResult
 	var networkIngresses networkingressv1.NetworkIngressList
 	var emptyData = make(map[string]string)
 	var itemLogger logr.Logger
 	log := op.ApiClient.Log.WithValues("request", op.Request.NamespacedName).WithValues("function", "updateConfigmap")
-	// Ensure configmap existes
+	// Ensure configmap exists
 	configmap, err := createConfigmap(op, configMapName)
 	if err != nil {
 		return err
@@ -78,8 +80,9 @@ func updateConfigmap(op NetworkIngressOperationRequest, configMapName types.Name
 		if item.Labels["kubernetes.io/network-ingress.class"] == op.ApiClient.NetworkIngressClass {
 			itemLogger = log.WithValues("network-ingress", item)
 			for _, rule := range item.Spec.Rules {
+				s := strconv.Itoa(rule.TargetPort)
+				rule.Port = hash(rule.Name + rule.Host + s)
 				id := fmt.Sprintf("%s:%d:%d", rule.Name, rule.Port, rule.TargetPort)
-
 				configmapPart = configmap.Data["haproxy.cfg"] + fmt.Sprintf("\n\n# beginning of %s\nfrontend %s\n  bind *:%d\n  option tcplog\n  log stdout format raw local0 info\n  mode tcp\n  use_backend %s\n  timeout client 50000ms\n\nbackend %s\n  mode tcp\n  server %s %s:%d\n  timeout connect 5000ms\n  timeout server 50000ms\n# end of %s", id, id, rule.Port, id, id, rule.Name, rule.Host, rule.TargetPort, id)
 				configmap.Data["haproxy.cfg"] = configmapPart
 				itemLogger.V(2).Info("network-ingress configuration", "value", configmapPart)
@@ -178,6 +181,17 @@ func updateBackendPorts(op NetworkIngressOperationRequest, backendDeploymentPort
 	return nil
 }
 
+func hash(seed string) int {
+	var dest int
+	var min = 3000
+	var max = 49151
+	h := fnv.New32a()
+	h.Write([]byte(seed))
+	rand.Seed(int64(h.Sum32()))
+	dest = rand.Intn(max-min) + min
+	return dest
+}
+
 func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.NamespacedName) ([]string, error) {
 	var networkIngresses networkingressv1.NetworkIngressList
 	var containerPort corev1.ContainerPort
@@ -200,15 +214,17 @@ func updatePorts(op NetworkIngressOperationRequest, backendDeploymentName types.
 	for _, item := range networkIngresses.Items {
 		itemLogger = log.WithValues("network-ingress", item.Name)
 		for _, rule := range item.Spec.Rules {
+			s := strconv.Itoa(rule.TargetPort)
+			randomPort := hash(rule.Name + rule.Host + s)
 			rulesLogger = itemLogger.WithValues("rule", rule)
 			containerPort.Name = rule.Name
 			containerPort.Protocol = corev1.ProtocolTCP
-			containerPort.ContainerPort = int32(rule.Port)
+			containerPort.ContainerPort = int32(randomPort)
 			backendDeploymentPorts = append(backendDeploymentPorts, containerPort)
 			rulesLogger.V(2).Info("", "container-port", containerPort)
 			servicePort.Name = rule.Name
 			servicePort.Port = int32(rule.Port)
-			servicePort.TargetPort = intstr.IntOrString{IntVal: int32(rule.TargetPort)}
+			servicePort.TargetPort = intstr.IntOrString{IntVal: int32(randomPort)}
 			rulesLogger.V(2).Info("", "service-port", servicePort)
 			backendServicePorts = append(backendServicePorts, servicePort)
 		}
