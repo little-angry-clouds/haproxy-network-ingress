@@ -42,8 +42,7 @@ type NetworkIngress struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   NetworkIngressSpec   `json:"spec,omitempty"`
-	Status NetworkIngressStatus `json:"status,omitempty"`
+	Spec NetworkIngressSpec `json:"spec"`
 }
 
 // +kubebuilder:object:root=true
