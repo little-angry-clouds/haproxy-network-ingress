@@ -46,5 +46,5 @@ spec:
   rules:
     - host: wttr.in
       port: 8080
-      targetPort: 8080
+      targetPort: 80
       name: test-weather
