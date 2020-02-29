@@ -36,11 +36,11 @@ require (
 	google.golang.org/appengine v1.6.5 // indirect
 	gopkg.in/d4l3k/messagediff.v1 v1.2.1
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0 // indirect
-	gopkg.in/yaml.v2 v2.2.5 // indirect
 	k8s.io/api v0.0.0-20191115135540-bbc9463b57e5
 	k8s.io/apiextensions-apiserver v0.0.0-20191116100850-6d086a84e511 // indirect
 	k8s.io/apimachinery v0.0.0-20191116082940-a2a3e09234fa
 	k8s.io/client-go v0.0.0-20191115215802-0a8a1d7b7fae
 	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6 // indirect
 	sigs.k8s.io/controller-runtime v0.4.0
+	sigs.k8s.io/kind v0.6.1 // indirect
 )
