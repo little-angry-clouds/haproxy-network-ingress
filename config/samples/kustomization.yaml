@@ -1,4 +1,3 @@
-namePrefix: haproxy-network-ingress-
 resources:
 - haproxy-deployment.yaml
 - network-ingress.yaml

@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= littleangryclouds/haproxy-network-ingress:0.2.0
+IMG ?= littleangryclouds/haproxy-network-ingress:0.2.1
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
@@ -60,6 +60,10 @@ docker-push:
 
 # Deploy the docker image
 docker-deploy: docker-build docker-push deploy
+
+# Integration tests
+test-int:
+	bates tests/tests
 
 # Delete the installed stuff
 delete:

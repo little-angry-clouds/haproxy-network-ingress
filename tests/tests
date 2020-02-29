@@ -26,11 +26,11 @@ function teardown() {
 }
 
 @test "verify the components of the deployment" {
-  IMG=littleangryclouds/haproxy-network-ingress:0.2.0
+  IMG=littleangryclouds/haproxy-network-ingress:0.2.1
   export IMG
-  run make --directory ../ install
+  run make  install
   assert_success
-  run make --directory ../ deploy
+  run make  deploy
   assert_success
   run verify "there is 1 crd named 'networkingress'"
   assert_success
@@ -57,17 +57,17 @@ function teardown() {
   # assert_success
   verify "there is 0 services named 'test-google'"
   assert_success
-  verify "'port' is '3306' for services named 'test-mysql'"
+  verify "there is 1 service named 'test-mysql'"
   assert_success
-  verify "'targetPort' is '3306' for services named 'test-mysql'"
+  verify "there is 1 service named 'test-mongo'"
+  assert_success
+  verify "there is 1 service named 'test-weather'"
+  assert_success
+  verify "'port' is '3306' for services named 'test-mysql'"
   assert_success
   verify "'port' is '27017' for services named 'test-mongo'"
   assert_success
-  verify "'targetPort' is '27017' for services named 'test-mongo'"
-  assert_success
   verify "'port' is '8080' for services named 'test-weather'"
-  assert_success
-  verify "'targetPort' is '8080' for services named 'test-weather'"
   assert_success
 }
 
@@ -76,15 +76,13 @@ function teardown() {
   sleep 30
   verify "'.spec.template.spec.containers[*].ports[*].name' is 'healthz,test-mongo,test-mysql,test-weather' for deploy named 'haproxy-network-ingress-backend'"
   assert_success
-  verify "'.spec.template.spec.containers[*].ports[*].containerPort' is '80,27017,3306,8080' for deploy named 'haproxy-network-ingress-backend'"
-  assert_success
 }
 
 # TODO verify configmap
 # TODO verify some curls
 
 @test "verify the uninstallation" {
-  run make --directory ../ delete
+  run make delete
   run verify "there is 0 crd named 'networkingress'"
   assert_success
   run try "at most 5 times every 5s to find 0 pod named 'haproxy-network-ingress-backend' with 'status' being 'running'"
