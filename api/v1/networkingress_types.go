@@ -18,6 +18,7 @@ type NetworkIngressSpec struct {
 // Rule is the core of a Network Ingress . It defines name, host, port and target port of a rule.
 type Rule struct {
 	// Name of the rule. This will be used as ID
+	// +kubebuilder:validation:MaxLength 63
 	Name string `json:"name"`
 	// Host of the rule. This is the destination machine that Haproxy will conecct to.
 	Host string `json:"host"`
