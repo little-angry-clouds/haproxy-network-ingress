@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
 	"strconv"
+	"time"
 )
 
 var ctx context.Context = context.Background()
@@ -336,7 +337,7 @@ func (r *NetworkIngressReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 		log.Error(err, "there was an error deleting unused services")
 		return ctrl.Result{}, err
 	}
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: time.Second * 300}, nil
 }
 
 // SetupWithManager calls NetworkIngressReconciler
